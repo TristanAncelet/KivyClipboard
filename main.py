@@ -21,7 +21,9 @@ if not clipboard_file.exists():
 
 class ClipItem(BoxLayout):
     clip_content = ObjectProperty(None)
-    text = StringProperty("unset")
+    def __init__(self, clip, **kwargs):
+        super().__init__(**kwargs)
+        self.clip_content.text = clip
 
 
 
@@ -79,8 +81,7 @@ class MainView(BoxLayout):
 
             self.text_input.text = ""
             if text_to_pass not in self.ClipboardClips:
-                clip = ClipItem()
-                self.clips.append(ClipItem())
+                self.clips.append(ClipItem(text_to_pass))
                 self.set_clips()
 
 
@@ -102,8 +103,8 @@ class MainView(BoxLayout):
 
             
     def clear(self):
-        for clip in self.clips:
-            self.remove_clip(clip)
+        for item in self.clips:
+            self.remove_clip(item)
 
 
 

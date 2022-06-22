@@ -5,10 +5,10 @@ block_cipher = None
 from kivy_deps import sdl2, glew
 
 a = Analysis(
-    ['__main__.py'],
+    ['main.py'],
     pathex=[],
     binaries=[],
-    datas=[('main.kv', '.'),('clipboard.json','files\clipboard.json')],
+    datas=[('main.kv', '.')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
