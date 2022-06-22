@@ -1,0 +1,76 @@
+#:import clipboard pyclip
+<ClipItem>:
+    clip_content: clip_content
+    text: clip_content.text
+    size_hint: 1,None
+
+    spacing: 5
+    padding: 10
+    canvas:
+        Color:
+            rgba: 0.5,0.5,0.5,1
+        Rectangle:
+            size: self.size
+            pos: self.pos
+    
+    TextInput:
+        id: clip_content
+        size_hint_x: 0.5
+        text: "Unset"
+    Button:
+        size_hint_x: 0.25 
+        text: "Delete"
+        on_press: 
+            app.main_view.remove_clip(self.parent)
+    
+    Button:
+        text: "Copy to Clipboard"
+        size_hint_x: 0.25 
+        on_press:
+            clipboard.copy(clip_content.text)
+            
+
+<MainView>:
+    text_input: text_input
+    clip_area:clip_area
+    scroll: scroll
+    orientation: "vertical"
+    BoxLayout:
+        TextInput:
+            multiline: False
+            id: text_input
+        Button:
+            text: "Add"
+            size_hint_x: 0.1
+            on_press:
+                root.add_to_list()
+        Button:
+            text: 'Save'
+            size_hint_x: 0.1
+            on_press:
+                root.save_clipboard()
+        
+        Button:
+            text: "Load"
+            size_hint_x: 0.1
+            on_press:
+                root.load()
+        Button:
+            text: "Clear"
+            size_hint_x: 0.1
+            on_press:
+                root.clear()
+
+    
+    ScrollView:
+        id: scroll
+        size_hint: 1,None
+        height: 500
+        BoxLayout:
+            id:clip_area
+            orientation: "vertical"
+            pos_hint: {"top":0}
+            spacing: 5
+            size: self.parent.width, self.parent.height-1
+            size_hint_y: None
+            height: self.minimum_height
