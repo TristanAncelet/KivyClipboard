@@ -42,34 +42,21 @@ class MainView(BoxLayout):
         if clipboard_file.exists():
             with clipboard_file.open("r") as file:
                 for clip in json.load(file):
-                    if clip not in self.ClipboardClips:
-                        self.clips.append(ClipItem(clip))
-        self.set_clips()
+                    if clip not in self.Clips:
+                        self.clip_area.add_widget(ClipItem(clip))
+                file.close()
 
     
     @property
     def Clips(self):
-        return self.clips
-
-    @property
-    def ClipboardClips(self):
-        return [clip.text for clip in self.clips]
+        clipText = [clip.text for clip in self.UiClips] 
+        clipText.reverse()
+        return clipText 
     
     @property
     def UiClips(self):
         return self.clip_area.children
     
-                
-    def set_clips(self):
-        for clip in self.UiClips:
-            if clip not in self.clips:
-                self.clip_area.remove_widget(clip)
-
-        for clip in self.clips:
-            if clip not in self.UiClips:
-                self.clip_area.add_widget(clip)
-
-
 
     def add_to_list(self):
         if (self.text_input.text != "" or pyclip.paste() != ""):
@@ -80,31 +67,36 @@ class MainView(BoxLayout):
                 text_to_pass = self.text_input.text
 
             self.text_input.text = ""
-            if text_to_pass not in self.ClipboardClips:
-                self.clips.append(ClipItem(text_to_pass))
-                self.set_clips()
+            if text_to_pass not in self.Clips:
+                self.clip_area.add_widget(ClipItem(text_to_pass))
 
 
         
     def remove_clip(self, clip:ClipItem):
-        self.clips.remove(clip)
-        self.set_clips()
+        self.clip_area.remove_widget(clip)
 
     def save_clipboard(self):
         with clipboard_file.open('w') as file:
-            json.dump(self.ClipboardClips, file)
+            json.dump(self.Clips, file)
             file.close()
 
-    def rclear(self, items:list):
-        if  len(items) > 0:
-            item = items[0]
-            items.remove(item)
-            self.rclear(items)
+    def move_clip_up(self, clip:ClipItem):
+        if clip != self.UiClips[-1]:
+            indexOfClip = self.clip_area.children.index(clip)
+            indexOfUpperNeighbor = indexOfClip + 1
+            self.clip_area.remove_widget(clip)
+            self.clip_area.add_widget(clip, indexOfUpperNeighbor)
 
-            
+    def move_clip_down(self, clip:ClipItem):
+        if clip != self.UiClips[0]:
+            indexOfClip = self.clip_area.children.index(clip)
+            indexOfLowerNeighbor = indexOfClip - 1
+            self.clip_area.remove_widget(clip)
+            self.clip_area.add_widget(clip, indexOfLowerNeighbor)
+        
+
     def clear(self):
-        for item in self.clips:
-            self.remove_clip(item)
+        self.clip_area.clear_widgets()
 
 
 

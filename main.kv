@@ -18,17 +18,26 @@
         size_hint_x: 0.5
         text: "Unset"
     Button:
-        size_hint_x: 0.25 
+        size_hint_x: 0.1 
         text: "Delete"
         on_press: 
             app.main_view.remove_clip(self.parent)
     
     Button:
-        text: "Copy to Clipboard"
-        size_hint_x: 0.25 
+        text: "Copy\nto\nClipboard"
+        size_hint_x: 0.1 
         on_press:
             clipboard.copy(clip_content.text)
-            
+    Button:
+        text: "Up"
+        size_hint_x: 0.1 
+        on_press:
+            app.main_view.move_clip_up(self.parent)
+    Button:
+        text: "Down"
+        size_hint_x: 0.1 
+        on_press:
+            app.main_view.move_clip_down(self.parent)
 
 <MainView>:
     text_input: text_input
