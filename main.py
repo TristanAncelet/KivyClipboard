@@ -1,12 +1,20 @@
 #!/usr/bin/python3
+from ast import arg
 import json
-import pyclip
 from pathlib import Path
+import threading
+import time
 
 from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
+from kivy.core.clipboard import Clipboard
+from kivy.clock import mainthread
 from kivy.properties import ObjectProperty, StringProperty, NumericProperty
 
+import logging
+logging.basicConfig(level=None)
+
+global main_view
 
 home_dir = Path.home()
 data_dir = home_dir / ".data"
@@ -24,9 +32,6 @@ class ClipItem(BoxLayout):
     def __init__(self, clip, **kwargs):
         super().__init__(**kwargs)
         self.clip_content.text = clip
-
-
-
 
 class MainView(BoxLayout):
     text_input = ObjectProperty(None)
@@ -46,6 +51,10 @@ class MainView(BoxLayout):
                         self.clip_area.add_widget(ClipItem(clip))
                 file.close()
 
+    @mainthread
+    def clipboard_trigger(self):
+        self.add_to_list()
+
     
     @property
     def Clips(self):
@@ -57,12 +66,12 @@ class MainView(BoxLayout):
     def UiClips(self):
         return self.clip_area.children
     
-
+    @mainthread
     def add_to_list(self):
-        if (self.text_input.text != "" or pyclip.paste() != ""):
+        if (self.text_input.text != "" or Clipboard.paste() != ""):
             if (self.text_input.text == ""):
-                if (pyclip.paste() != ""):
-                    text_to_pass = pyclip.paste().decode()
+                if (Clipboard.paste() != ""):
+                    text_to_pass = Clipboard.paste().strip()
             else:
                 text_to_pass = self.text_input.text
 
@@ -100,12 +109,24 @@ class MainView(BoxLayout):
 
 
 
+def update_clips(main_view):
+    while True:
+        main_view.add_to_list()
+        time.sleep(2)
+
 class MainApp(App):
     def build(self):
-        self.main_view = MainView()
+        global main_view
+        main_view = MainView()
+        clipboard_thread = threading.Thread(target=update_clips,args = (main_view,) , daemon=True)
+        clipboard_thread.start()
+        self.main_view = main_view
         return self.main_view
+
+
+
+
 
 if __name__ == "__main__":
     app = MainApp()
     app.run()
-    
