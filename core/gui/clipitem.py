@@ -6,4 +6,3 @@ class ClipItem(BoxLayout):
     def __init__(self, clip, **kwargs):
         super().__init__(**kwargs)
         self.clip_content.text = clip
-
