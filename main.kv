@@ -17,6 +17,9 @@
         id: clip_content
         size_hint_x: 0.5
         text: "Unset"
+        valign: "center" 
+        halign: "center" if ('\n' not in self.text) else "left"
+
     Button:
         size_hint_x: 0.1 
         text: "Delete"
@@ -28,16 +31,18 @@
         size_hint_x: 0.1 
         on_press:
             clipboard.copy(clip_content.text)
-    Button:
-        text: "Up"
+    BoxLayout:
         size_hint_x: 0.1 
-        on_press:
-            app.main_view.move_clip_up(self.parent)
-    Button:
-        text: "Down"
-        size_hint_x: 0.1 
-        on_press:
-            app.main_view.move_clip_down(self.parent)
+        orientation: 'vertical'
+        spacing: 4
+        Button:
+            text: "Up"
+            on_press:
+                app.main_view.move_clip_up(root)
+        Button:
+            text: "Down"
+            on_press:
+                app.main_view.move_clip_down(root)
 
 <MainView>:
     text_input: text_input
@@ -78,7 +83,7 @@
         BoxLayout:
             id:clip_area
             orientation: "vertical"
-            pos_hint: {"top":0}
+            pos_hint: {"top":1}
             spacing: 5
             size: self.parent.width, self.parent.height-1
             size_hint_y: None

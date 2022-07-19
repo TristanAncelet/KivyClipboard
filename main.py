@@ -11,8 +11,7 @@ from kivy.core.clipboard import Clipboard
 from kivy.clock import mainthread
 from kivy.properties import ObjectProperty, StringProperty, NumericProperty
 
-import logging
-logging.basicConfig(level=None)
+from history import History
 
 global main_view
 
@@ -37,23 +36,37 @@ class MainView(BoxLayout):
     text_input = ObjectProperty(None)
     clip_area = ObjectProperty(None)
     scroll = ObjectProperty(None)
+    history = History
     clips = list()
 
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.history = History()
+        self.clipboard_thread = threading.Thread(target=self.clipboard_thread , daemon=True)
+        self.clipboard_thread.start()
+        self.load()
 
     def load(self):
         if clipboard_file.exists():
             with clipboard_file.open("r") as file:
                 for clip in json.load(file):
+                    self.history.add(clip)
                     if clip not in self.Clips:
                         self.clip_area.add_widget(ClipItem(clip))
                 file.close()
 
-    @mainthread
-    def clipboard_trigger(self):
-        self.add_to_list()
+    def clipboard_thread(self):
+
+        while True:
+            """
+            Since any clips that will be added to the history, if something you have in the clipboard
+            has the same hash value (aka if they are the same thing) it will not be loaded into the 
+            ui
+            """
+            if not self.history.Contains(Clipboard.paste()):
+                self.add_to_list()
+            time.sleep(1)
 
     
     @property
@@ -66,22 +79,40 @@ class MainView(BoxLayout):
     def UiClips(self):
         return self.clip_area.children
     
+    def have_valid_inputs(self):
+        valid_inputs_exist = False
+
+        text_input_is_valid = (self.text_input.text != "")
+        clipboard_is_valid = (Clipboard.paste() != "")
+
+        return text_input_is_valid, clipboard_is_valid
+
+
+        
+    
     @mainthread
     def add_to_list(self):
-        if (self.text_input.text != "" or Clipboard.paste() != ""):
-            if (self.text_input.text == ""):
-                if (Clipboard.paste() != ""):
-                    text_to_pass = Clipboard.paste().strip()
+
+        text_input_is_valid, clipboard_is_valid = self.have_valid_inputs()
+
+        if any([text_input_is_valid, clipboard_is_valid]):
+            text_to_pass = ""
+
+            if not text_input_is_valid:
+                if clipboard_is_valid:
+                    text_to_pass = Clipboard.paste()
             else:
                 text_to_pass = self.text_input.text
+                self.text_input.text = ""
 
-            self.text_input.text = ""
             if text_to_pass not in self.Clips:
+                self.history.add(text_to_pass)
                 self.clip_area.add_widget(ClipItem(text_to_pass))
 
 
         
     def remove_clip(self, clip:ClipItem):
+        self.history.remove_value(clip.clip_content.text)
         self.clip_area.remove_widget(clip)
 
     def save_clipboard(self):
@@ -90,6 +121,7 @@ class MainView(BoxLayout):
             file.close()
 
     def move_clip_up(self, clip:ClipItem):
+        assert clip in self.UiClips, "The Clip that was provided was not present in the UI"
         if clip != self.UiClips[-1]:
             indexOfClip = self.clip_area.children.index(clip)
             indexOfUpperNeighbor = indexOfClip + 1
@@ -97,6 +129,7 @@ class MainView(BoxLayout):
             self.clip_area.add_widget(clip, indexOfUpperNeighbor)
 
     def move_clip_down(self, clip:ClipItem):
+        assert clip in self.UiClips, "The Clip that was provided was not present in the UI"
         if clip != self.UiClips[0]:
             indexOfClip = self.clip_area.children.index(clip)
             indexOfLowerNeighbor = indexOfClip - 1
@@ -106,20 +139,24 @@ class MainView(BoxLayout):
 
     def clear(self):
         self.clip_area.clear_widgets()
+        #self.recursive_clear(self.IUiClips)
+    
+    def recursive_clear(self, clip_list):
+        if len(clip_list) > 0:
+            clip = clip_list[0]
+            if not clip == clip_list[-1]:
+                self.recursive_clear(clip_list[1:])
+            self.history.remove_value(clip.clip_content.text)
+            self.clip_area.remove_widget(clip)
 
 
 
-def update_clips(main_view):
-    while True:
-        main_view.add_to_list()
-        time.sleep(2)
+
 
 class MainApp(App):
     def build(self):
         global main_view
         main_view = MainView()
-        clipboard_thread = threading.Thread(target=update_clips,args = (main_view,) , daemon=True)
-        clipboard_thread.start()
         self.main_view = main_view
         return self.main_view
 
